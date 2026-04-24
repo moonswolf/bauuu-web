@@ -30,12 +30,24 @@ export default function ImageUpload({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Show preview
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('L\'immagine deve essere massimo 5MB');
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Seleziona un\'immagine valida');
+      return;
+    }
+
+    // Show preview immediately
     const reader = new FileReader();
     reader.onload = () => setPreview(reader.result as string);
     reader.readAsDataURL(file);
 
-    // Upload
+    // Upload with progress indication
     setUploading(true);
     try {
       let url: string;
@@ -44,13 +56,16 @@ export default function ImageUpload({
       } else if (type === 'dog' && dogId) {
         url = await uploadDogPhoto(dogId, file, index);
       } else {
-        throw new Error('Invalid upload configuration');
+        throw new Error('Configurazione upload non valida');
       }
       
+      // Only update parent after successful upload
       onUploadComplete(url);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload failed:', error);
-      alert('Errore durante il caricamento dell\'immagine');
+      // Reset preview on error
+      setPreview(currentImage || null);
+      alert(`Errore durante il caricamento: ${error?.message || 'Riprova'}`);
     } finally {
       setUploading(false);
     }
