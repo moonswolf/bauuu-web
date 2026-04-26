@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: 'Bauuu - Dating per amanti dei cani',
   description: 'L\'app di dating per chi ama i cani. Trova l\'amore attraverso il tuo migliore amico a quattro zampe.',
   manifest: '/manifest.json',
-  themeColor: '#7B2EFF',
+  themeColor: '#E8533C',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

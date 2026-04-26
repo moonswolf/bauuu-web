@@ -5,15 +5,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --primary-50: #f3e8ff;
-  --primary-500: #7B2EFF;
-  --primary-600: #6c28e0;
-  --primary-700: #5d21c2;
-  --secondary-500: #FF6B6B;
-  --secondary-600: #e85a5a;
-  --accent-500: #FFD700;
+  /* === BRAND COLORS — Coral Red Predominant === */
+  --primary-50: #FFF1ED;
+  --primary-100: #FFDDD3;
+  --primary-200: #FFC0AD;
+  --primary-300: #FF9A7D;
+  --primary-400: #FF7752;
+  --primary-500: #E8533C;  /* Coral warmth — main brand color */
+  --primary-600: #CC3D28;
+  --primary-700: #A82E1C;
+  --primary-800: #862416;
+  --primary-900: #5C1810;
+
+  --secondary-500: #4CAF7D; /* Verde parco / natura */
+  --secondary-600: #3D9468;
+  --accent-500: #FFD700;    /* Giallo tag-da-zampa */
   --accent-600: #e6c200;
-  --background: #FAFAFA;
+
+  --background: #FFFAF8;    /* Warm cream with subtle coral undertone */
+  --foreground: #1C1210;
+  --muted: #F5EFEC;
+  --muted-foreground: #6B5C56;
+  --border: #E8DFDA;
 }
 
 * {
@@ -28,16 +41,7 @@ body {
   overflow-x: hidden;
   font-family: 'Inter', sans-serif;
   background-color: var(--background);
-}
-
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  color: var(--foreground);
 }
 
 a {
@@ -45,7 +49,7 @@ a {
   text-decoration: none;
 }
 
-/* Button styles */
+/* Container */
 .container {
   width: 100%;
   max-width: 428px;
@@ -59,7 +63,7 @@ a {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--muted);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -77,7 +81,17 @@ a {
 }
 
 .btn-primary {
-  @apply bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed;
+  background-color: var(--primary-500);
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-600);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn-secondary {
@@ -85,14 +99,26 @@ a {
 }
 
 .btn-outline {
-  @apply border border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white;
+  border: 1px solid var(--primary-500);
+  color: var(--primary-500);
+}
+
+.btn-outline:hover {
+  background-color: var(--primary-500);
+  color: #ffffff;
 }
 
 /* Input styles */
 .input {
-  @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-colors;
-  background-color: #ffffff !important;
-  color: #111827 !important;
+  @apply w-full px-4 py-3 rounded-lg outline-none transition-colors;
+  background-color: #ffffff;
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+
+.input:focus {
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 2px var(--primary-100);
 }
 
 /* Force light mode for form elements regardless of OS/browser preference */
@@ -103,8 +129,8 @@ input[type="number"],
 textarea,
 select {
   background-color: #ffffff !important;
-  color: #111827 !important;
-  border-color: #d1d5db !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
 }
 
 /* Radio buttons - explicit custom styling */
@@ -113,7 +139,7 @@ input[type="radio"] {
   -webkit-appearance: none;
   width: 18px !important;
   height: 18px !important;
-  border: 2px solid #d1d5db !important;
+  border: 2px solid var(--border) !important;
   border-radius: 50% !important;
   background-color: #ffffff !important;
   cursor: pointer;
@@ -121,7 +147,7 @@ input[type="radio"] {
 }
 
 input[type="radio"]:checked {
-  border-color: #7B2EFF !important;
+  border-color: var(--primary-500) !important;
   background-color: #ffffff !important;
 }
 
@@ -134,7 +160,7 @@ input[type="radio"]:checked::after {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background-color: #7B2EFF;
+  background-color: var(--primary-500);
 }
 
 /* Checkbox styling */
@@ -143,7 +169,7 @@ input[type="checkbox"] {
   -webkit-appearance: none;
   width: 18px !important;
   height: 18px !important;
-  border: 2px solid #d1d5db !important;
+  border: 2px solid var(--border) !important;
   border-radius: 4px !important;
   background-color: #ffffff !important;
   cursor: pointer;
@@ -151,12 +177,12 @@ input[type="checkbox"] {
 }
 
 input[type="checkbox"]:checked {
-  border-color: #7B2EFF !important;
-  background-color: #7B2EFF !important;
+  border-color: var(--primary-500) !important;
+  background-color: var(--primary-500) !important;
 }
 
 input[type="checkbox"]:checked::after {
-  content: '✓';
+  content: '\2713';
   position: absolute;
   top: 50%;
   left: 50%;
@@ -168,7 +194,8 @@ input[type="checkbox"]:checked::after {
 
 /* Card styles */
 .card {
-  @apply bg-white rounded-lg shadow-sm border border-gray-100;
+  @apply bg-white rounded-lg shadow-sm;
+  border: 1px solid var(--border);
 }
 
 /* Safe area for mobile */

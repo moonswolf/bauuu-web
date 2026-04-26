@@ -10,20 +10,26 @@ export default {
     extend: {
       colors: {
         primary: {
-          50: '#f3e8ff',
-          500: '#7B2EFF',
-          600: '#6c28e0',
-          700: '#5d21c2',
+          50: '#FFF1ED',
+          100: '#FFDDD3',
+          200: '#FFC0AD',
+          300: '#FF9A7D',
+          400: '#FF7752',
+          500: '#E8533C',
+          600: '#CC3D28',
+          700: '#A82E1C',
+          800: '#862416',
+          900: '#5C1810',
         },
         secondary: {
-          500: '#FF6B6B',
-          600: '#e85a5a',
+          500: '#4CAF7D',
+          600: '#3D9468',
         },
         accent: {
           500: '#FFD700',
           600: '#e6c200',
         },
-        background: '#FAFAFA',
+        background: '#FFFAF8',
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],

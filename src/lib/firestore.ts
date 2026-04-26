@@ -6,9 +6,14 @@ import { db, storage } from './firebase';
 import { UserProfile, Dog, Swipe, Match, Message, SwipeDirection, Report, ReportReason, Block, NotificationPrefs } from '@/types';
 
 // ── Image Upload ──
+const isStorageConfigured = (): boolean => {
+  const bucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+  return !!(bucket && bucket.length > 0 && storage);
+};
+
 const doUpload = async (path: string, file: File): Promise<string> => {
-  if (!storage) {
-    throw new Error('Firebase Storage non configurato');
+  if (!isStorageConfigured()) {
+    throw new Error('Firebase Storage non configurato. Controlla le variabili d\'ambiente.');
   }
   const storageRef = ref(storage, path);
   await uploadBytes(storageRef, file, { contentType: file.type || 'image/jpeg' });
