@@ -6,18 +6,21 @@ import { db, storage } from './firebase';
 import { UserProfile, Dog, Swipe, Match, Message, SwipeDirection, Report, ReportReason, Block, NotificationPrefs } from '@/types';
 
 // ── Image Upload ──
-export const uploadDogPhoto = async (dogId: string, file: File, index: number): Promise<string> => {
-  const path = `dogs/${dogId}/photo_${index}_${Date.now()}.jpg`;
+const doUpload = async (path: string, file: File): Promise<string> => {
+  if (!storage) {
+    throw new Error('Firebase Storage non configurato');
+  }
   const storageRef = ref(storage, path);
-  await uploadBytes(storageRef, file, { contentType: 'image/jpeg' });
+  await uploadBytes(storageRef, file, { contentType: file.type || 'image/jpeg' });
   return getDownloadURL(storageRef);
 };
 
+export const uploadDogPhoto = async (dogId: string, file: File, index: number): Promise<string> => {
+  return doUpload(`dogs/${dogId}/photo_${index}_${Date.now()}.jpg`, file);
+};
+
 export const uploadUserPhoto = async (uid: string, file: File, index: number): Promise<string> => {
-  const path = `users/${uid}/photo_${index}_${Date.now()}.jpg`;
-  const storageRef = ref(storage, path);
-  await uploadBytes(storageRef, file, { contentType: 'image/jpeg' });
-  return getDownloadURL(storageRef);
+  return doUpload(`users/${uid}/photo_${index}_${Date.now()}.jpg`, file);
 };
 
 // ── Delete Dog ──

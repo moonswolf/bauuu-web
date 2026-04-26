@@ -89,6 +89,13 @@ self.addEventListener('notificationclick', (event) => {
 
 // Fetch event - network first with offline fallback for navigation
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // Let external API requests (Firebase, Google APIs) pass through directly
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => {
@@ -98,7 +105,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For other requests - cache first, then network
+  // For same-origin non-navigation requests - cache first, then network
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request);

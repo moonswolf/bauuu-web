@@ -3,6 +3,8 @@
 import { useState, useRef } from 'react';
 import { uploadUserPhoto, uploadDogPhoto } from '@/lib/firestore';
 
+const UPLOAD_TIMEOUT_MS = 30_000;
+
 interface ImageUploadProps {
   onUploadComplete: (url: string) => void;
   type: 'user' | 'dog';
@@ -24,6 +26,7 @@ export default function ImageUpload({
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentImage || null);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,40 +35,46 @@ export default function ImageUpload({
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('L\'immagine deve essere massimo 5MB');
+      setError('L\'immagine deve essere massimo 5MB');
       return;
     }
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Seleziona un\'immagine valida');
+      setError('Seleziona un\'immagine valida');
       return;
     }
+
+    setError(null);
 
     // Show preview immediately
     const reader = new FileReader();
     reader.onload = () => setPreview(reader.result as string);
     reader.readAsDataURL(file);
 
-    // Upload with progress indication
+    // Upload with timeout to prevent infinite hang
     setUploading(true);
     try {
-      let url: string;
-      if (type === 'user') {
-        url = await uploadUserPhoto(userId, file, index);
-      } else if (type === 'dog' && dogId) {
-        url = await uploadDogPhoto(dogId, file, index);
-      } else {
+      const uploadPromise = (async () => {
+        if (type === 'user') {
+          return uploadUserPhoto(userId, file, index);
+        } else if (type === 'dog' && dogId) {
+          return uploadDogPhoto(dogId, file, index);
+        }
         throw new Error('Configurazione upload non valida');
-      }
-      
-      // Only update parent after successful upload
+      })();
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Upload scaduto. Controlla la connessione e riprova.')), UPLOAD_TIMEOUT_MS)
+      );
+
+      const url = await Promise.race([uploadPromise, timeoutPromise]);
+
       onUploadComplete(url);
-    } catch (error: any) {
-      console.error('Upload failed:', error);
-      // Reset preview on error
+    } catch (err: any) {
+      console.error('Upload failed:', err);
       setPreview(currentImage || null);
-      alert(`Errore durante il caricamento: ${error?.message || 'Riprova'}`);
+      setError(err?.message || 'Errore durante il caricamento. Riprova.');
     } finally {
       setUploading(false);
     }
@@ -80,9 +89,9 @@ export default function ImageUpload({
         ref={fileInputRef}
         className="hidden"
       />
-      
+
       <div
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => !uploading && fileInputRef.current?.click()}
         className="w-full h-full border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary-500 transition-colors"
       >
         {uploading ? (
@@ -103,12 +112,17 @@ export default function ImageUpload({
           </div>
         )}
       </div>
-      
+
+      {error && !uploading && (
+        <p className="text-xs text-red-600 mt-1 text-center">{error}</p>
+      )}
+
       {preview && !uploading && (
         <button
           onClick={(e) => {
             e.stopPropagation();
             setPreview(null);
+            setError(null);
             if (fileInputRef.current) fileInputRef.current.value = '';
           }}
           className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
