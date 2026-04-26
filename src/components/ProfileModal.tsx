@@ -3,16 +3,19 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserProfile, Dog } from '@/types';
 import { useState } from 'react';
+import ReportModal from './ReportModal';
 
 interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   user: UserProfile;
   dog: Dog;
+  currentUserId?: string;
 }
 
-export default function ProfileModal({ isOpen, onClose, user, dog }: ProfileModalProps) {
+export default function ProfileModal({ isOpen, onClose, user, dog, currentUserId }: ProfileModalProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showReport, setShowReport] = useState(false);
   const allImages = [...(dog.photos || []), ...(user.profilePhotos || [])];
 
   const nextImage = () => {
@@ -175,9 +178,30 @@ export default function ProfileModal({ isOpen, onClose, user, dog }: ProfileModa
                     )}
                   </div>
                 </div>
+
+                {/* Report button */}
+                {currentUserId && currentUserId !== user.id && (
+                  <div className="pt-4 border-t border-gray-200">
+                    <button
+                      onClick={() => setShowReport(true)}
+                      className="text-sm text-red-500 hover:text-red-600"
+                    >
+                      Segnala profilo
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>
+
+          {showReport && currentUserId && (
+            <ReportModal
+              reporterId={currentUserId}
+              reportedProfileId={user.id}
+              onClose={() => setShowReport(false)}
+              onReported={onClose}
+            />
+          )}
         </motion.div>
       )}
     </AnimatePresence>

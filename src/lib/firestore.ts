@@ -3,7 +3,7 @@ import {
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from './firebase';
-import { UserProfile, Dog, Swipe, Match, Message, SwipeDirection } from '@/types';
+import { UserProfile, Dog, Swipe, Match, Message, SwipeDirection, Report, ReportReason, Block, NotificationPrefs } from '@/types';
 
 // ── Image Upload ──
 export const uploadDogPhoto = async (dogId: string, file: File, index: number): Promise<string> => {
@@ -154,4 +154,104 @@ export const getSwipedUserIds = async (uid: string): Promise<Set<string>> => {
   const q = query(collection(db, 'swipes'), where('swiperUserId', '==', uid));
   const snap = await getDocs(q);
   return new Set(snap.docs.map(d => d.data().swipedUserId));
+};
+
+// ── Block ──
+export const blockUser = async (blockerId: string, blockedId: string) => {
+  const blockDocId = `${blockerId}_${blockedId}`;
+  await setDoc(doc(db, 'blocks', blockDocId), {
+    blockerId,
+    blockedId,
+    createdAt: serverTimestamp(),
+  });
+};
+
+export const unblockUser = async (blockerId: string, blockedId: string) => {
+  const blockDocId = `${blockerId}_${blockedId}`;
+  await deleteDoc(doc(db, 'blocks', blockDocId));
+};
+
+export const getBlockedUsers = async (uid: string): Promise<Block[]> => {
+  const q = query(collection(db, 'blocks'), where('blockerId', '==', uid));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ ...d.data() }) as Block);
+};
+
+export const isUserBlocked = async (blockerId: string, blockedId: string): Promise<boolean> => {
+  const blockDocId = `${blockerId}_${blockedId}`;
+  const snap = await getDoc(doc(db, 'blocks', blockDocId));
+  return snap.exists();
+};
+
+// ── Report ──
+export const submitReport = async (report: Omit<Report, 'id' | 'status' | 'createdAt'>) => {
+  const ref = await addDoc(collection(db, 'reports'), {
+    ...report,
+    status: 'pending',
+    createdAt: serverTimestamp(),
+  });
+  return ref.id;
+};
+
+// ── Settings ──
+export const updateNotificationPrefs = async (uid: string, prefs: NotificationPrefs) => {
+  await updateDoc(doc(db, 'users', uid), { notificationPrefs: prefs, updatedAt: serverTimestamp() });
+};
+
+export const updateHideFromDiscovery = async (uid: string, hide: boolean) => {
+  await updateDoc(doc(db, 'users', uid), { hideFromDiscovery: hide, updatedAt: serverTimestamp() });
+};
+
+// ── Account deletion (soft delete) ──
+export const softDeleteAccount = async (uid: string) => {
+  await updateDoc(doc(db, 'users', uid), {
+    deletedAt: serverTimestamp(),
+    hideFromDiscovery: true,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+export const cancelAccountDeletion = async (uid: string) => {
+  await updateDoc(doc(db, 'users', uid), {
+    deletedAt: null,
+    hideFromDiscovery: false,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+// ── Data export (GDPR Art. 20) ──
+export const exportUserData = async (uid: string) => {
+  const [profileSnap, dogsSnap, matchesSnap1, matchesSnap2, swipesSnap] = await Promise.all([
+    getDoc(doc(db, 'users', uid)),
+    getDocs(query(collection(db, 'dogs'), where('userId', '==', uid))),
+    getDocs(query(collection(db, 'matches'), where('user1Id', '==', uid))),
+    getDocs(query(collection(db, 'matches'), where('user2Id', '==', uid))),
+    getDocs(query(collection(db, 'swipes'), where('swiperUserId', '==', uid))),
+  ]);
+
+  const profile = profileSnap.exists() ? profileSnap.data() : null;
+  const dogs = dogsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const matches = [
+    ...matchesSnap1.docs.map(d => ({ id: d.id, ...d.data() })),
+    ...matchesSnap2.docs.map(d => ({ id: d.id, ...d.data() })),
+  ];
+  const swipes = swipesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  // Gather messages from all matches
+  const messages: Record<string, unknown>[] = [];
+  for (const match of matches) {
+    const msgSnap = await getDocs(
+      query(collection(db, 'matches', match.id, 'messages'), where('senderId', '==', uid))
+    );
+    messages.push(...msgSnap.docs.map(d => ({ id: d.id, matchId: match.id, ...d.data() })));
+  }
+
+  return {
+    exportedAt: new Date().toISOString(),
+    profile,
+    dogs,
+    matches,
+    swipes,
+    messages,
+  };
 };

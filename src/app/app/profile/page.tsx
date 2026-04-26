@@ -420,6 +420,12 @@ export default function ProfilePage() {
         {/* Actions */}
         <div className="space-y-3">
           <button
+            onClick={() => router.push('/app/settings')}
+            className="w-full btn btn-outline"
+          >
+            Impostazioni
+          </button>
+          <button
             onClick={handleSignOut}
             className="w-full btn bg-red-500 text-white hover:bg-red-600"
           >

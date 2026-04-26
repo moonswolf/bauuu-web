@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import CookieBanner from '@/components/CookieBanner';
+import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -35,7 +37,14 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className="bg-background text-gray-900 safe-area-top safe-area-bottom">
-        {children}
+        <a href="#main-content" className="skip-link">
+          Salta al contenuto
+        </a>
+        <main id="main-content">
+          {children}
+        </main>
+        <CookieBanner />
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );

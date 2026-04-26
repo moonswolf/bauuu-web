@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { subscribeToMessages, sendMessage, getUserProfile, unmatch } from '@/lib/firestore';
 import { Message, UserProfile } from '@/types';
+import ReportModal from '@/components/ReportModal';
 
 interface ChatPageProps {
   params: {
@@ -20,6 +21,7 @@ export default function ChatPage({ params }: ChatPageProps) {
   const [otherUser, setOtherUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -168,14 +170,26 @@ export default function ChatPage({ params }: ChatPageProps) {
             </div>
           </div>
 
-          <button
-            onClick={handleUnmatch}
-            className="text-gray-400 hover:text-red-500"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowReport(true)}
+              className="text-gray-400 hover:text-red-500"
+              aria-label="Segnala utente"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </button>
+            <button
+              onClick={handleUnmatch}
+              className="text-gray-400 hover:text-red-500"
+              aria-label="Cancella match"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -235,7 +249,7 @@ export default function ChatPage({ params }: ChatPageProps) {
             className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
             disabled={sending}
           />
-          
+
           <button
             type="submit"
             disabled={!newMessage.trim() || sending}
@@ -251,6 +265,14 @@ export default function ChatPage({ params }: ChatPageProps) {
           </button>
         </form>
       </div>
+
+      {showReport && user && otherUser && (
+        <ReportModal
+          reporterId={user.uid}
+          reportedProfileId={otherUser.id}
+          onClose={() => setShowReport(false)}
+        />
+      )}
     </div>
   );
 }
