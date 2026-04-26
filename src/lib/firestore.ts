@@ -2,7 +2,7 @@ import {
   collection, doc, setDoc, getDoc, getDocs, updateDoc, addDoc, query, where, orderBy, limit, onSnapshot, serverTimestamp, deleteDoc, Timestamp,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from './firebase';
+import { db, storage, auth } from './firebase';
 import { UserProfile, Dog, Swipe, Match, Message, SwipeDirection, Report, ReportReason, Block, NotificationPrefs } from '@/types';
 
 // ── Image Upload ──
@@ -11,10 +11,32 @@ const isStorageConfigured = (): boolean => {
   return !!(bucket && bucket.length > 0 && storage);
 };
 
+const waitForAuth = (timeoutMs = 5000): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    if (auth.currentUser) {
+      resolve();
+      return;
+    }
+    const timer = setTimeout(() => {
+      unsubscribe();
+      reject(new Error('Autenticazione non pronta. Riprova tra qualche secondo.'));
+    }, timeoutMs);
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        clearTimeout(timer);
+        unsubscribe();
+        resolve();
+      }
+    });
+  });
+};
+
 const doUpload = async (path: string, file: File): Promise<string> => {
   if (!isStorageConfigured()) {
     throw new Error('Firebase Storage non configurato. Controlla le variabili d\'ambiente.');
   }
+  // Ensure user is authenticated before uploading (Firebase Storage rules require auth)
+  await waitForAuth();
   const storageRef = ref(storage, path);
   await uploadBytes(storageRef, file, { contentType: file.type || 'image/jpeg' });
   return getDownloadURL(storageRef);

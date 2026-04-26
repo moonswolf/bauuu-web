@@ -1,7 +1,7 @@
 // Bauuu Service Worker
 // Handles push notifications and basic offline caching
 
-const CACHE_NAME = 'bauuu-v1';
+const CACHE_NAME = 'bauuu-v2';
 const OFFLINE_URL = '/';
 
 // Install event - cache essential resources
@@ -96,6 +96,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Never intercept non-GET requests (uploads, form submissions, etc.)
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => {
@@ -105,7 +110,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For same-origin non-navigation requests - cache first, then network
+  // For same-origin GET requests - cache first, then network
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { addDog, updateUserProfile } from '@/lib/firestore';
@@ -33,7 +33,6 @@ export default function SetupDogPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
-  const [dogId, setDogId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -80,14 +79,10 @@ export default function SetupDogPage() {
     setPhotos(prev => [...prev, url]);
   };
 
-  const generateDogId = () => {
-    if (!dogId && user) {
-      const tempId = `temp_${user.uid}_${Date.now()}`;
-      setDogId(tempId);
-      return tempId;
-    }
-    return dogId!;
-  };
+  const tempDogId = useMemo(
+    () => (user ? `temp_${user.uid}_${Date.now()}` : ''),
+    [user],
+  );
 
   return (
     <AuthGuard>
@@ -115,7 +110,7 @@ export default function SetupDogPage() {
                     <ImageUpload
                       type="dog"
                       userId={user?.uid || ''}
-                      dogId={generateDogId()}
+                      dogId={tempDogId}
                       index={index}
                       onUploadComplete={handlePhotoUpload}
                       currentImage={photos[index]}
